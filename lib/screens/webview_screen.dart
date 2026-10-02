@@ -103,7 +103,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
               },
               onReceivedError: (controller, request, error) {
                 // 只对主框架的加载失败给出错误提示，忽略子资源错误。
-                if (request.isForMainFrame) {
+                if (request.isForMainFrame == true) {
                   setState(() {
                     _loadFailed = true;
                     _loading = false;
