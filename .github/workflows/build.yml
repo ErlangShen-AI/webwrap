@@ -14,7 +14,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        run: |
+          git clone --quiet --depth 1 --branch "${{ github.ref_name }}" "https://github.com/${{ github.repository }}" "$RUNNER_TEMP/repo"
+          cp -a "$RUNNER_TEMP/repo/." .
+          rm -rf "$RUNNER_TEMP/repo"
 
       - name: Setup Java
         uses: actions/setup-java@v6
