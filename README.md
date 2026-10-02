@@ -73,7 +73,7 @@ Convert any webpage into a standalone fullscreen Android app.
 ## 修改应用名称 / 包名
 
 - **应用名**：修改 `android/app/src/main/AndroidManifest.xml` 中的 `android:label`（当前为 `WebWrap`）
-- **包名**：直接在 GitHub Actions 的 `package_name` 输入框中填写，构建时会自动写入 `android/app/build.gradle.kts` 的 `applicationId`
+- **包名**：直接在 GitHub Actions 的 `package_name` 输入框中填写，构建时会自动写入 `android/app/build.gradle` 的 `applicationId`
 - **签名**：默认使用仓库内置的 `overlay/android/app/upload-keystore.p12`，如需更换见上方「固定签名」
 
 ## 本地运行（可选）

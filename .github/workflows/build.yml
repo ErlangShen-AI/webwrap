@@ -71,20 +71,11 @@ jobs:
           rm -rf "$RUNNER_TEMP/flutter_create"
           mkdir -p "$RUNNER_TEMP/flutter_create"
           cd "$RUNNER_TEMP/flutter_create"
-          flutter create --platforms=android --org com.example --project-name webwrap . >/tmp/create.log 2>&1
+          flutter create --platforms=android --org com.example --project-name webwrap . >/dev/null 2>&1
           cd "$GITHUB_WORKSPACE"
           rm -rf android
           cp -a "$RUNNER_TEMP/flutter_create/android" android
           cp -a overlay/android/. android/
-          if [ ! -f android/app/build.gradle.kts ]; then
-            echo '=== flutter create 日志 ===' >&2
-            cat /tmp/create.log >&2
-            echo '=== 生成的 android 目录内容 ===' >&2
-            find "$RUNNER_TEMP/flutter_create/android" -maxdepth 4 -type f 2>&1 | sort >&2
-            echo '=== android 目录是否存在 ===' >&2
-            ls -la "$GITHUB_WORKSPACE/android" 2>&1 >&2
-            exit 1
-          fi
 
       - name: Enable Gradle Optimizations
         run: |
@@ -97,23 +88,23 @@ jobs:
           python3 - "$PKG" <<'PYEOF'
           import pathlib, re, sys
           pkg = sys.argv[1]
-          p = pathlib.Path('android/app/build.gradle.kts')
+          p = pathlib.Path('android/app/build.gradle')
           s = p.read_text()
           s = re.sub(r'applicationId = "[^"]*"', f'applicationId = "{pkg}"', s)
           s = s.replace(
-              'signingConfig = signingConfigs.getByName("debug")',
-              'signingConfig = signingConfigs.getByName("release")',
+              'signingConfig = signingConfigs.debug',
+              'signingConfig = signingConfigs.release',
           )
           signing = '''signingConfigs {
-              create("release") {
-                  storeFile = file("upload-keystore.p12")
-                  storePassword = "webwrap123"
-                  keyAlias = "webwrap"
-                  keyPassword = "webwrap123"
-                  storeType = "PKCS12"
-              }
+          release {
+              storeFile file("upload-keystore.p12")
+              storePassword "webwrap123"
+              keyAlias "webwrap"
+              keyPassword "webwrap123"
+              storeType "PKCS12"
           }
-          buildTypes {'''
+      }
+      buildTypes {'''
           s = s.replace('buildTypes {', signing, 1)
           p.write_text(s)
           PYEOF
