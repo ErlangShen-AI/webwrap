@@ -68,7 +68,13 @@ jobs:
 
       - name: Generate Android Scaffold
         run: |
+          rm -rf "$RUNNER_TEMP/flutter_create"
+          mkdir -p "$RUNNER_TEMP/flutter_create"
+          cd "$RUNNER_TEMP/flutter_create"
           flutter create --platforms=android --org com.example --project-name webwrap . >/dev/null 2>&1
+          cd "$GITHUB_WORKSPACE"
+          rm -rf android
+          cp -a "$RUNNER_TEMP/flutter_create/android" android
           cp -a overlay/android/. android/
 
       - name: Enable Gradle Optimizations
