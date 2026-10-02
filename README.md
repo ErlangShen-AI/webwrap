@@ -11,11 +11,31 @@ Convert any webpage into a standalone fullscreen Android app.
 
 1. 把这个仓库 fork / push 到你的 GitHub 账号
 2. 打开仓库 → **Actions** → **Build APK** → **Run workflow**
-3. 输入要转换的网页地址（`target_url`），点击 **Run workflow**
+3. 输入要转换的网页地址（`target_url`）和**应用包名**（`package_name`），点击 **Run workflow**
 4. 等待构建完成（第一次约 3~5 分钟，之后约 1~2 分钟，详见下方「构建加速」）
 5. 在 **Artifacts** 中下载 `webwrap-release-apk`，解压后安装 `app-release.apk`
 
-> 也可以直接在 Actions 页面把 `target_url` 改成你自己的网址，随时重新构建。
+> 也可以直接在 Actions 页面修改 `target_url` 和 `package_name`，随时重新构建。
+
+### 包名规则
+
+`package_name` 即安卓的 `applicationId`（应用唯一标识），必须满足：
+
+- 至少两段，用 `.` 分隔，例如 `com.example.app`
+- 每段以字母开头，只能包含字母、数字和下划线（不能包含 `-` 或其他符号）
+- 合法示例：`com.example.app`、`io.github.myapp`
+- 非法示例：`123abc`、`com.example-app`、`com.example.app-v2`
+
+> 输入非法包名时，工作流会在**构建开始前直接中止**并提示错误，不会浪费构建时间。
+
+### 固定签名
+
+项目内置了**固定的发布签名**（`android/app/upload-keystore.p12`，PKCS12）。
+
+- 每次构建使用同一个签名密钥，因此 **APK 可以覆盖安装升级**（签名一致），不会出现「已安装应用签名不一致」的问题
+- 默认签名密钥信息（别名 `webwrap`，密码 `webwrap123`）已随仓库提交，方便直接使用
+
+> ⚠️ **安全提醒**：该密钥是公开在仓库里的，仅适合个人/测试用途。如果要发布到应用商店，请**替换为你自己的签名密钥**（用 `keytool -genkeypair` 生成并替换 `android/app/upload-keystore.p12`，同时更新工作流中对应的密码/别名）。
 
 ## 构建加速
 
@@ -52,8 +72,9 @@ Convert any webpage into a standalone fullscreen Android app.
 
 ## 修改应用名称 / 包名
 
-- **应用名**：修改 `android/app/src/main/AndroidManifest.xml` 中的 `android:label`（当前为 `WebWrap`），或在 `android/app/build.gradle.kts` 的 `manifestPlaceholders["appName"]` 中修改
-- **包名**：修改 `android/app/build.gradle.kts` 中的 `applicationId` 和 `namespace`，以及 `MainActivity.kt` 的包路径
+- **应用名**：修改 `android/app/src/main/AndroidManifest.xml` 中的 `android:label`（当前为 `WebWrap`）
+- **包名**：直接在 GitHub Actions 的 `package_name` 输入框中填写，构建时会自动写入 `android/app/build.gradle.kts` 的 `applicationId`
+- **签名**：默认使用仓库内置的 `android/app/upload-keystore.p12`，如需更换见上方「固定签名」
 
 ## 本地运行（可选）
 
