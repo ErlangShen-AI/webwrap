@@ -32,6 +32,11 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.4'
+
       - name: Configure Flutter
         run: |
           flutter config --no-analytics >/dev/null 2>&1 || true
@@ -42,6 +47,10 @@ jobs:
 
       - name: Generate Android Scaffold
         run: flutter create --platforms=android --org com.example --project-name webwrap . >/dev/null 2>&1
+
+      - name: Enable Gradle Optimizations
+        run: |
+          printf 'org.gradle.parallel=true\norg.gradle.caching=true\n' >> android/gradle.properties
 
       - name: Build Release APK
         run: |

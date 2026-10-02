@@ -12,10 +12,29 @@ Convert any webpage into a standalone fullscreen Android app.
 1. 把这个仓库 fork / push 到你的 GitHub 账号
 2. 打开仓库 → **Actions** → **Build APK** → **Run workflow**
 3. 输入要转换的网页地址（`target_url`），点击 **Run workflow**
-4. 等待构建完成（约 5~10 分钟）
+4. 等待构建完成（第一次约 3~5 分钟，之后约 1~2 分钟，详见下方「构建加速」）
 5. 在 **Artifacts** 中下载 `webwrap-release-apk`，解压后安装 `app-release.apk`
 
 > 也可以直接在 Actions 页面把 `target_url` 改成你自己的网址，随时重新构建。
+
+## 构建加速
+
+项目内置了多层 GitHub Actions 缓存，**同一仓库的第二次及以后构建会显著加快**：
+
+| 缓存项 | 工具 | 说明 |
+|--------|------|------|
+| Flutter SDK 缓存 | `subosito/flutter-action` | 缓存 Flutter 3.24.3 SDK 本体 |
+| Pub 依赖缓存 | `subosito/flutter-action` | 缓存 `~/.pub-cache`，`flutter pub get` 秒级完成 |
+| Gradle 发行版缓存 | `gradle/actions/setup-gradle` | 缓存 Gradle 8.4 发行版，免去重复下载 |
+| Gradle 依赖缓存 | `gradle/actions/setup-gradle` | 缓存 `~/.gradle/caches`（AGP / Kotlin / AndroidX 等） |
+| Gradle 构建缓存 | `org.gradle.caching=true` | 复用上次构建产物，只重编变化部分 |
+| Gradle 并行构建 | `org.gradle.parallel=true` | 多模块并行编译 |
+
+- **第一次触发（冷缓存）**：约 3~5 分钟，需要下载 Flutter SDK、Gradle 发行版和全部依赖
+- **之后触发（热缓存）**：通常 1~2 分钟内完成
+
+> 缓存由 GitHub Actions 自动管理（默认保留 7 天，命中后自动续期）。
+> 如需手动清除缓存：仓库 → **Settings** → **Actions** → **Caches** → 删除对应缓存项，下一次构建即恢复冷缓存。
 
 ## 特性
 
