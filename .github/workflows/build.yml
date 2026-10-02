@@ -67,7 +67,9 @@ jobs:
         run: flutter pub get >/dev/null 2>&1
 
       - name: Generate Android Scaffold
-        run: flutter create --platforms=android --org com.example --project-name webwrap . >/dev/null 2>&1
+        run: |
+          flutter create --platforms=android --org com.example --project-name webwrap . >/dev/null 2>&1
+          cp -a overlay/android/. android/
 
       - name: Enable Gradle Optimizations
         run: |

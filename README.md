@@ -30,12 +30,12 @@ Convert any webpage into a standalone fullscreen Android app.
 
 ### 固定签名
 
-项目内置了**固定的发布签名**（`android/app/upload-keystore.p12`，PKCS12）。
+项目内置了**固定的发布签名**（`overlay/android/app/upload-keystore.p12`，PKCS12，构建时自动复制到 `android/app/` 并配置到 release 签名）。
 
 - 每次构建使用同一个签名密钥，因此 **APK 可以覆盖安装升级**（签名一致），不会出现「已安装应用签名不一致」的问题
 - 默认签名密钥信息（别名 `webwrap`，密码 `webwrap123`）已随仓库提交，方便直接使用
 
-> ⚠️ **安全提醒**：该密钥是公开在仓库里的，仅适合个人/测试用途。如果要发布到应用商店，请**替换为你自己的签名密钥**（用 `keytool -genkeypair` 生成并替换 `android/app/upload-keystore.p12`，同时更新工作流中对应的密码/别名）。
+> ⚠️ **安全提醒**：该密钥是公开在仓库里的，仅适合个人/测试用途。如果要发布到应用商店，请**替换为你自己的签名密钥**（用 `keytool -genkeypair` 生成 PKCS12 文件并替换 `overlay/android/app/upload-keystore.p12`，同时更新工作流中对应的密码/别名）。
 
 ## 构建加速
 
@@ -74,7 +74,7 @@ Convert any webpage into a standalone fullscreen Android app.
 
 - **应用名**：修改 `android/app/src/main/AndroidManifest.xml` 中的 `android:label`（当前为 `WebWrap`）
 - **包名**：直接在 GitHub Actions 的 `package_name` 输入框中填写，构建时会自动写入 `android/app/build.gradle.kts` 的 `applicationId`
-- **签名**：默认使用仓库内置的 `android/app/upload-keystore.p12`，如需更换见上方「固定签名」
+- **签名**：默认使用仓库内置的 `overlay/android/app/upload-keystore.p12`，如需更换见上方「固定签名」
 
 ## 本地运行（可选）
 
