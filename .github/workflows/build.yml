@@ -96,15 +96,15 @@ jobs:
               'signingConfig = signingConfigs.release',
           )
           signing = '''signingConfigs {
-          release {
-              storeFile file("upload-keystore.p12")
-              storePassword "webwrap123"
-              keyAlias "webwrap"
-              keyPassword "webwrap123"
-              storeType "PKCS12"
+              release {
+                  storeFile file("upload-keystore.p12")
+                  storePassword "webwrap123"
+                  keyAlias "webwrap"
+                  keyPassword "webwrap123"
+                  storeType "PKCS12"
+              }
           }
-      }
-      buildTypes {'''
+          buildTypes {'''
           s = s.replace('buildTypes {', signing, 1)
           p.write_text(s)
           PYEOF
