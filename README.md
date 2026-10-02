@@ -45,8 +45,8 @@ Convert any webpage into a standalone fullscreen Android app.
 |--------|------|------|
 | Flutter SDK 缓存 | `subosito/flutter-action` | 缓存 Flutter 3.24.3 SDK 本体 |
 | Pub 依赖缓存 | `subosito/flutter-action` | 缓存 `~/.pub-cache`，`flutter pub get` 秒级完成 |
-| Gradle 发行版缓存 | `gradle/actions/setup-gradle` | 缓存 Gradle 8.4 发行版，免去重复下载 |
-| Gradle 依赖缓存 | `gradle/actions/setup-gradle` | 缓存 `~/.gradle/caches`（AGP / Kotlin / AndroidX 等） |
+| Gradle 发行版缓存 | `actions/cache` | 缓存 Gradle 8.3 发行版，免去重复下载 |
+| Gradle 依赖缓存 | `actions/cache` | 缓存 `~/.gradle/caches`（AGP / Kotlin / AndroidX 等） |
 | Gradle 构建缓存 | `org.gradle.caching=true` | 复用上次构建产物，只重编变化部分 |
 | Gradle 并行构建 | `org.gradle.parallel=true` | 多模块并行编译 |
 
