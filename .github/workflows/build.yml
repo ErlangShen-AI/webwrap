@@ -1,0 +1,125 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: '要转换的网页地址，例如 https://example.com'
+        required: false
+        default: 'https://example.com'
+      package_name:
+        description: '应用包名（applicationId），例如 com.example.app。至少两段，每段以字母开头，只能包含字母、数字、下划线'
+        required: false
+        default: 'com.example.webwrap'
+
+jobs:
+  build:
+    name: Build Release APK
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        run: |
+          git clone --quiet --depth 1 --branch "${{ github.ref_name }}" "https://github.com/${{ github.repository }}" "$RUNNER_TEMP/repo"
+          cp -a "$RUNNER_TEMP/repo/." .
+          rm -rf "$RUNNER_TEMP/repo"
+
+      - name: Validate Inputs
+        env:
+          PKG: ${{ github.event.inputs.package_name }}
+          URL: ${{ github.event.inputs.target_url }}
+        run: |
+          python3 - "$PKG" "$URL" <<'PYEOF'
+          import re, sys
+          pkg, url = sys.argv[1], sys.argv[2]
+          if not re.fullmatch(r'[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+', pkg):
+              print('错误：包名不合法。', file=sys.stderr)
+              print('包名必须形如 com.example.app：至少两段，每段以字母开头，只能包含字母、数字和下划线。', file=sys.stderr)
+              sys.exit(1)
+          if not re.fullmatch(r'https?://\S+', url):
+              print('错误：网址不合法，必须以 http:// 或 https:// 开头。', file=sys.stderr)
+              sys.exit(1)
+          PYEOF
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: stable
+          cache: true
+
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.4'
+
+      - name: Configure Flutter
+        run: |
+          flutter config --no-analytics >/dev/null 2>&1 || true
+          flutter config --no-cli-animations >/dev/null 2>&1 || true
+
+      - name: Resolve Dependencies
+        run: flutter pub get >/dev/null 2>&1
+
+      - name: Generate Android Scaffold
+        run: |
+          rm -rf "$RUNNER_TEMP/flutter_create"
+          mkdir -p "$RUNNER_TEMP/flutter_create"
+          cd "$RUNNER_TEMP/flutter_create"
+          flutter create --platforms=android --org com.example --project-name webwrap . >/dev/null 2>&1
+          cd "$GITHUB_WORKSPACE"
+          rm -rf android
+          cp -a "$RUNNER_TEMP/flutter_create/android" android
+          cp -a overlay/android/. android/
+
+      - name: Enable Gradle Optimizations
+        run: |
+          printf 'org.gradle.parallel=true\norg.gradle.caching=true\n' >> android/gradle.properties
+
+      - name: Apply Package Name and Signing
+        env:
+          PKG: ${{ github.event.inputs.package_name }}
+        run: |
+          python3 - "$PKG" <<'PYEOF'
+          import pathlib, re, sys
+          pkg = sys.argv[1]
+          p = pathlib.Path('android/app/build.gradle')
+          s = p.read_text()
+          s = re.sub(r'applicationId = "[^"]*"', f'applicationId = "{pkg}"', s)
+          s = s.replace(
+              'signingConfig = signingConfigs.debug',
+              'signingConfig = signingConfigs.release',
+          )
+          signing = '''signingConfigs {
+          release {
+              storeFile file("upload-keystore.p12")
+              storePassword "webwrap123"
+              keyAlias "webwrap"
+              keyPassword "webwrap123"
+              storeType "PKCS12"
+          }
+      }
+      buildTypes {'''
+          s = s.replace('buildTypes {', signing, 1)
+          p.write_text(s)
+          PYEOF
+
+      - name: Build Release APK
+        run: |
+          flutter build apk --release --dart-define=APP_URL="${{ github.event.inputs.target_url }}" >/tmp/build.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            tail -200 /tmp/build.log >&2
+            exit $code
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: webwrap-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
