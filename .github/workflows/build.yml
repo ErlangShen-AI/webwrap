@@ -29,23 +29,14 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.4'
-
-      # 在临时目录生成 Gradle Wrapper，再复制进 android/，
-      # 避免仓库里提交二进制 gradle-wrapper.jar。
-      - name: Generate Gradle Wrapper
-        run: |
-          mkdir -p "$RUNNER_TEMP/gw"
-          cd "$RUNNER_TEMP/gw"
-          echo "rootProject.name = 'wrapper-gen'" > settings.gradle
-          gradle wrapper --gradle-version 8.4
-          cp -r gradlew gradlew.bat gradle "$GITHUB_WORKSPACE/android/"
-
       - name: Flutter Pub Get
         run: flutter pub get
+
+      # 用 flutter create 生成与当前 Flutter SDK 完全匹配的 Android 工程脚手架
+      # （settings.gradle.kts / build.gradle.kts / gradlew 等），
+      # 避免手写 Gradle 文件与 SDK 版本不匹配。
+      - name: Generate Android Scaffold
+        run: flutter create --platforms=android --org com.example --project-name webwrap .
 
       - name: Build Release APK
         run: flutter build apk --release --dart-define=APP_URL="${{ github.event.inputs.target_url }}"
