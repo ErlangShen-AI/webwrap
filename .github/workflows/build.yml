@@ -11,13 +11,13 @@ on:
 jobs:
   build:
     name: Build Release APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -29,20 +29,28 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Flutter Pub Get
-        run: flutter pub get
+      - name: Configure Flutter
+        run: |
+          flutter config --no-analytics >/dev/null 2>&1 || true
+          flutter config --no-cli-animations >/dev/null 2>&1 || true
 
-      # 用 flutter create 生成与当前 Flutter SDK 完全匹配的 Android 工程脚手架
-      # （settings.gradle.kts / build.gradle.kts / gradlew 等），
-      # 避免手写 Gradle 文件与 SDK 版本不匹配。
+      - name: Resolve Dependencies
+        run: flutter pub get >/dev/null 2>&1
+
       - name: Generate Android Scaffold
-        run: flutter create --platforms=android --org com.example --project-name webwrap .
+        run: flutter create --platforms=android --org com.example --project-name webwrap . >/dev/null 2>&1
 
       - name: Build Release APK
-        run: flutter build apk --release --dart-define=APP_URL="${{ github.event.inputs.target_url }}"
+        run: |
+          flutter build apk --release --dart-define=APP_URL="${{ github.event.inputs.target_url }}" >/tmp/build.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            tail -200 /tmp/build.log >&2
+            exit $code
+          fi
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
         with:
           name: webwrap-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
